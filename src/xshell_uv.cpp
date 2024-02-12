@@ -66,40 +66,40 @@ namespace xeus
 
         // Create a (libuv) poll handle and bind it to the loop
         auto poll_resource = loop->resource<uvw::poll_handle>(fd);
-        poll_resource->init();
+        // poll_resource->init();
 
-        // // Register callback
-        // poll_resource->on<uvw::poll_event>(
-        //     [](uvw::poll_event&, uvw::poll_handle&)
-        //     {
-        //         std::cout << "[OOO] New message\n"; // REMOVE
-        //         zmq::multipart_t wire_msg;
-        //         wire_msg.recv(m_shell);
-        //         try
-        //         {
-        //             xmessage msg = p_server->deserialize(wire_msg);
-        //             p_server->notify_shell_listener(std::move(msg));
-        //         }
-        //         catch(std::exception& e)
-        //         {
-        //             std::cerr << e.what() << std::endl;
-        //         }
+        // Register callback
+        poll_resource->on<uvw::poll_event>(
+            [this](uvw::poll_event&, uvw::poll_handle&)
+            {
+                std::cout << "[OOO] New message\n"; // REMOVE
+                zmq::multipart_t wire_msg;
+                wire_msg.recv(m_shell);
+                try
+                {
+                    xmessage msg = p_server->deserialize(wire_msg);
+                    p_server->notify_shell_listener(std::move(msg));
+                }
+                catch(std::exception& e)
+                {
+                    std::cerr << e.what() << std::endl;
+                }
 
-        //         // stop message
-        //         wire_msg.recv(m_controller);
-        //         std::string msg { wire_msg.peekstr(0) };
-        //         if(msg == "stop")
-        //         {
-        //             // TODO: close handles
-        //             wire_msg.send(m_controller);
-        //         }
-        //         else
-        //         {
-        //             zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
-        //             wire_reply.send(m_controller);
-        //         }
-        //     }
-        // );
+                // stop message
+                wire_msg.recv(m_controller);
+                std::string msg { wire_msg.peekstr(0) };
+                if(msg == "stop")
+                {
+                    // TODO: close handles
+                    wire_msg.send(m_controller);
+                }
+                else
+                {
+                    zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
+                    wire_reply.send(m_controller);
+                }
+            }
+        );
 
         // Start the poll
         poll_resource->start(uvw::poll_handle::poll_event::READABLE);
