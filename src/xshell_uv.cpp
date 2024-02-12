@@ -85,19 +85,19 @@ namespace xeus
                     std::cerr << e.what() << std::endl;
                 }
 
-                // stop message
-                wire_msg.recv(m_controller);
-                std::string msg { wire_msg.peekstr(0) };
-                if(msg == "stop")
-                {
-                    // TODO: close handles
-                    wire_msg.send(m_controller);
-                }
-                else
-                {
-                    zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
-                    wire_reply.send(m_controller);
-                }
+                // // stop message
+                // wire_msg.recv(m_controller);
+                // std::string msg { wire_msg.peekstr(0) };
+                // if(msg == "stop")
+                // {
+                //     // TODO: close handles
+                //     wire_msg.send(m_controller);
+                // }
+                // else
+                // {
+                //     zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
+                //     wire_reply.send(m_controller);
+                // }
             }
         );
 
