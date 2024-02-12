@@ -13,6 +13,7 @@
 
 #define UVW_AS_LIB
 #include <uvw.hpp>
+#include <zmq.hpp>
 
 #include "xeus-zmq/xmiddleware.hpp"
 #include "xserver_uv_shell_main.hpp"
@@ -60,67 +61,65 @@ namespace xeus
         // Initialize the default loop
         auto loop = uvw::loop::get_default();
 
-        using poll_h = uvw::poll_handle;
+        // Get the socket file descriptor
+        auto fd = m_shell.get(zmq::sockopt::fd);
 
-        // m_shell and m_controller are zmq sockets
+        // Create a (libuv) poll handle and bind it to the loop
+        auto poll_resource = loop->resource<uvw::poll_handle>(fd);
+        poll_resource->init();
 
-        // Create a resource and bind it to the loop
-        std::shared_ptr<poll_h> shell_resource = loop->resource<poll_h>();
-        std::shared_ptr<poll_h> control_resource = loop->resource<poll_h>();
+        // // Register callback
+        // poll_resource->on<uvw::poll_event>(
+        //     [](uvw::poll_event&, uvw::poll_handle&)
+        //     {
+        //         std::cout << "[OOO] New message\n"; // REMOVE
+        //         zmq::multipart_t wire_msg;
+        //         wire_msg.recv(m_shell);
+        //         try
+        //         {
+        //             xmessage msg = p_server->deserialize(wire_msg);
+        //             p_server->notify_shell_listener(std::move(msg));
+        //         }
+        //         catch(std::exception& e)
+        //         {
+        //             std::cerr << e.what() << std::endl;
+        //         }
 
-        // Resources are event emitters to which listeners are attached
-        shell_resource->on<uvw::error_event>(
-            [](const uvw::error_event&, poll_h&)
-            {
-                // TODO: handle errors
-                std::cerr << "Something wrong.\n";
-            }
-        );
+        //         // stop message
+        //         wire_msg.recv(m_controller);
+        //         std::string msg { wire_msg.peekstr(0) };
+        //         if(msg == "stop")
+        //         {
+        //             // TODO: close handles
+        //             wire_msg.send(m_controller);
+        //         }
+        //         else
+        //         {
+        //             zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
+        //             wire_reply.send(m_controller);
+        //         }
+        //     }
+        // );
 
-        shell_resource->on<uvw::listen_event>(
-            [this](const uvw::listen_event& /*event*/, poll_h&)
-            {
-                zmq::multipart_t wire_msg;
-                wire_msg.recv(m_shell);
-                try
-                {
-                    xmessage msg = p_server->deserialize(wire_msg);
-                    p_server->notify_shell_listener(std::move(msg));
-                }
-                catch(std::exception& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                }
-            }
-        );
+        // Start the poll
+        poll_resource->start(uvw::poll_handle::poll_event::READABLE);
 
-        control_resource->on<uvw::listen_event>(
-            [this](const uvw::listen_event&, poll_h&)
-            {
-                // stop message
-                zmq::multipart_t wire_msg;
-                wire_msg.recv(m_controller);
-                std::string msg { wire_msg.peekstr(0) };
-                if(msg == "stop")
-                {
-                    // TODO: close handles
-                    wire_msg.send(m_controller);
-                }
-                else
-                {
-                    zmq::multipart_t wire_reply = p_server->notify_internal_listener(wire_msg);
-                    wire_reply.send(m_controller);
-                }
-            }
-        );
 
-        // TODO: connect the server to the client?
-        // shell_resource->bind(get_shell_port(), 4242); // poll handle has no bind()!!!
-        // shell_resource->listen(); // poll handle has no listen either
-        // control_resource->listen();
+        // // Resources are event emitters to which listeners are attached
+        // shell_resource->on<uvw::error_event>(
+        //     [](const uvw::error_event&, poll_h&)
+        //     {
+        //         // TODO: handle errors
+        //         std::cerr << "Something wrong.\n";
+        //     }
+        // );
 
-        // loop->run();
-        loop->run(uvw::loop::run_mode::DEFAULT); // ONCE, NOWAIT
+
+
+        loop->run();
+        // loop->run(uvw::loop::run_mode::DEFAULT); // ONCE, NOWAIT
+
+        // TODO: close resources ??
     }
 
     void xshell_uv::send_shell(zmq::multipart_t& message)
