@@ -72,36 +72,24 @@ namespace xeus
         shell_poll->on<uvw::poll_event>(
             [this](uvw::poll_event&, uvw::poll_handle&)
             {
-                std::cout << "[OOO] New shell message\n"; // REMOVE
+                // std::cout << "[OOO] New shell message\n"; // REMOVE
+                zmq::multipart_t multi_msg;
                 zmq::multipart_t wire_msg;
-                wire_msg.recv(m_shell, ZMQ_DONTWAIT);
-                try
+                if (multi_msg.recv(m_shell, ZMQ_DONTWAIT))
                 {
+                    std::cout << "[OOO] inside shell if\n"; // REMOVE
+                    wire_msg = std::move(multi_msg);
                     xmessage msg = p_server->deserialize(wire_msg);
                     p_server->notify_shell_listener(std::move(msg));
                 }
-                catch(std::exception& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                }
+                std::cout << "[OOO] after if\n"; // REMOVE
             }
         );
 
         controller_poll->on<uvw::poll_event>(
             [this](uvw::poll_event&, uvw::poll_handle&)
             {
-                std::cout << "[OOO] New control message\n"; // REMOVE
-                zmq::multipart_t wire_msg;
-                wire_msg.recv(m_controller, ZMQ_DONTWAIT);
-                try
-                {
-                    xmessage msg = p_server->deserialize(wire_msg);
-                    p_server->notify_control_listener(std::move(msg));
-                }
-                catch(std::exception& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                }
+                // TODO: check for stop
             }
         );
 
