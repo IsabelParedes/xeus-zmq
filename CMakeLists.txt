@@ -138,6 +138,7 @@ set(XEUS_ZMQ_HEADERS
     ${XEUS_ZMQ_INCLUDE_DIR}/xeus-zmq/xthread.hpp
     ${XEUS_ZMQ_INCLUDE_DIR}/xeus-zmq/xzmq_context.hpp
     ${XEUS_ZMQ_INCLUDE_DIR}/xeus-zmq/xhook_base.hpp
+    ${XEUS_ZMQ_INCLUDE_DIR}/xeus-zmq/xloop.hpp
 )
 
 set(XEUS_ZMQ_SOURCES
@@ -193,6 +194,7 @@ set(XEUS_ZMQ_SOURCES
     ${XEUS_ZMQ_SOURCE_DIR}/xzmq_serializer.cpp
     ${XEUS_ZMQ_SOURCE_DIR}/xzmq_serializer.hpp
     ${XEUS_ZMQ_SOURCE_DIR}/xhook_base.cpp
+    ${XEUS_ZMQ_SOURCE_DIR}/xloop.cpp
 )
 
 # Targets and link
